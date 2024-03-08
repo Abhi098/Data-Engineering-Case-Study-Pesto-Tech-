@@ -3,6 +3,7 @@ import requests
 from kafka import KafkaProducer
 import json
 import time
+import csv
 import avro.schema
 import avro.io
 import io
@@ -19,7 +20,6 @@ schema = avro.schema.Parse(open("bid_request_schema.avsc", "rb").read())
 avro_writer = avro.io.DatumWriter(schema)
 avro_data = io.BytesIO()
 
-
 # Function to fetch data from the API
 def fetch_data_from_api():
     # Replace 'api_endpoint' with the actual API endpoint URL
@@ -29,6 +29,13 @@ def fetch_data_from_api():
     else:
         print("Failed to fetch data from API:", response.status_code)
         return None
+
+# Function to read CSV data
+def read_csv_data(file_path):
+    with open(file_path, newline='') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            yield row
 
 # Simulated real-time data generation from API
 while True:
@@ -44,9 +51,9 @@ while True:
         time.sleep(5)  # Retry after 5 seconds
     
     # Simulated clicks and conversions data   
-    click_conversion = {"user_id": 1001, "ad_creative_id": 1, "event_timestamp": int(time.time()), "conversion_type": "signup"}
-    producer.send('clicks_conversions', value=click_conversion)
-    print("Published click/conversion event:", click_conversion)
+    for click_conversion in read_csv_data('clicks_conversions.csv'):
+        producer.send('clicks_conversions', value=click_conversion)
+        print("Published click/conversion event:", click_conversion)
 
     # Simulated Avro data
     avro_record = {"user_id": 1001, "ad_creative_id": 1, "timestamp": int(time.time()), "bid_amount": 10.5}
@@ -58,15 +65,9 @@ while True:
     producer.send('avro_data_topic', value=avro_data_payload)
     print("Published Avro data:", avro_record)
     
-    
-    
-    
-    
-    
     # Sleep for some time to simulate real-time behavior
     time.sleep(1)  # Simulate real-time data generation every second
 
 # Flush and close the producer (this will never execute as the loop is infinite)
 producer.flush()
 producer.close()
-
