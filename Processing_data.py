@@ -4,13 +4,16 @@ import json
 import avro.schema
 import avro.io
 import io
+import win32api
+import re
 
 # Kafka configuration
 bootstrap_servers = 'localhost:9092'
 ad_impressions_topic = 'ad_impressions'
 clicks_conversions_topic = 'clicks_conversions'
 avro_data_topic = 'avro_data_topic'
-
+timestamp_regex = r'\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}'
+website_regex = r'https?://(?:www\.)?\w+\.\w+(?:/\S*)?'
 # Elasticsearch configuration
 es = Elasticsearch("http://localhost:9200")
 
@@ -27,20 +30,40 @@ consumer = KafkaConsumer(ad_impressions_topic, clicks_conversions_topic, avro_da
 def validate_ad_impression(ad_impression):
     # Example validation: check if ad impression data is not empty
     if not ad_impression:
+        win32api.MessageBox("No ad impression data present")
         return False
+    if not bool(re.search(timestamp_regex,ad_impression['timestamp'])):
+        win32api.MessageBox("Date not correct")
+        return False
+    
+    if not bool(re.search(website_regex, ad_impression['website'])):
+        win32api.MessageBox("Website Data not correct")
+        return False
+    
     return True
 
 # Function to validate clicks/conversions
 def validate_click_conversion(click_conversion):
     # Example validation: check if click/conversion data is not empty
     if not click_conversion:
+        win32api.MessageBox("No click conversion data present")
         return False
+    
+    if not bool(re.search(timestamp_regex,click_conversion['timestamp'])):
+        win32api.MessageBox("Date not correct")
+        return False
+    
+    if click_conversion['conversion'] in ['Yes','No']:
+        win32api.MessageBox("Conversion has garbage values")
+        return False
+    
     return True
 
 # Function to validate Avro data
 def validate_avro_data(avro_data):
     # Example validation: check if Avro data is not empty
     if not avro_data:
+        win32api.MessageBox("No avro data present")
         return False
     return True
 
