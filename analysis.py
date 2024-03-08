@@ -1,9 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Mar  7 16:57:59 2024
 
-@author: Vineet Pillai
-"""
 
 from elasticsearch import Elasticsearch
 
